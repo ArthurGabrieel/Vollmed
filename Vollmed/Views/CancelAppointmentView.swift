@@ -21,8 +21,8 @@ struct CancelAppointmentView: View {
                                                reason: reasonToCancel)
         
         switch result {
-        case .success(let isCancelled):
-            isAppointmentCancelled = isCancelled
+        case .success(_):
+            isAppointmentCancelled = true
         case .failure(let error):
             print(error.localizedDescription)
         }

@@ -12,6 +12,7 @@ struct ScheduleAppointmentView: View {
     @State private var showAlert = false
     @State private var isAppointmentScheduled = false
     @Environment(\.presentationMode) var presentationMode
+    var authManager = AuthenticationManager.instance
     
     let service = WebService()
     let specialistID: String
@@ -40,6 +41,11 @@ struct ScheduleAppointmentView: View {
     }
     
     func scheduleAppointment() async {
+        guard let patientID = authManager.patientID else {
+            print("error to get patient id")
+            return
+        }
+        
         let appointmentRequest = ScheduleAppointmentRequest(specialist: specialistID,
                                                             patient: patientID,
                                                             date: selectedDate.convertToString())

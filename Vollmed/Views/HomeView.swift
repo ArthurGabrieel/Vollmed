@@ -10,6 +10,7 @@ import SwiftUI
 struct HomeView: View {
     @State private var specialists: [Specialist] = []
     @State private var isLoading = true
+    var authManager = AuthenticationManager.instance
     
     let service = WebService()
     
@@ -25,6 +26,17 @@ struct HomeView: View {
         isLoading = false
     }
     
+    func logout() async {
+        let result = await service.logoutPatient()
+        
+        switch result {
+        case .success(_):
+            authManager.removeToken()
+            authManager.removePatientID()
+        case .failure(let error):
+            print(error.localizedDescription)
+        }
+    }
     
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -58,6 +70,20 @@ struct HomeView: View {
         .padding(.top)
         .task {
             await getSpecialists()
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: {
+                    Task {
+                        await logout()
+                    }
+                }, label: {
+                    HStack(spacing: 2) {
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                        Text("Logout")
+                    }
+                })
+            }
         }
     }
 }
