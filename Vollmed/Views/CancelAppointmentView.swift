@@ -9,26 +9,13 @@ import SwiftUI
 
 struct CancelAppointmentView: View {
     let appointmentID: String
-    let service = WebService()
-    
+    let viewModel = CancelAppointmentViewModel(service: AppointmentService())
+
     @State private var reasonToCancel = ""
     @State private var showAlert = false
     @State private var isAppointmentCancelled = false
     @Environment(\.presentationMode) var presentationMode
-    
-    func cancelAppointment() async {
-        let result = await service.cancelAppointment(id: appointmentID,
-                                               reason: reasonToCancel)
-        
-        switch result {
-        case .success(_):
-            isAppointmentCancelled = true
-        case .failure(let error):
-            print(error.localizedDescription)
-        }
-        showAlert = true
-    }
-    
+
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
@@ -49,7 +36,9 @@ struct CancelAppointmentView: View {
             Spacer()
             Button(action: {
                 Task {
-                    await cancelAppointment()
+                    isAppointmentCancelled = await viewModel.cancelAppointment(id: appointmentID,
+                                                                               reason: reasonToCancel)
+                    showAlert = true
                 }
             }, label: {
                 ButtonView(text: "Cancelar consulta", buttonType: .cancel)

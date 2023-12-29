@@ -9,16 +9,17 @@ import SwiftUI
 
 struct CustomBackButtonView: View {
     @Environment(\.presentationMode) var presentationMode
-    
+
     var body: some View {
         Button(action: {
-            self.presentationMode.wrappedValue.dismiss()}) {
-                HStack {
-                    Image(systemName: "chevron.left")
-                    Text("Voltar")
-                }
-                .foregroundStyle(.accent)
+            self.presentationMode.wrappedValue.dismiss()
+        }) {
+            HStack {
+                Image(systemName: "chevron.left")
+                Text("Voltar")
             }
+            .foregroundStyle(.accent)
+        }
     }
 }
 

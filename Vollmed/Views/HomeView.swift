@@ -10,34 +10,9 @@ import SwiftUI
 struct HomeView: View {
     @State private var specialists: [Specialist] = []
     @State private var isLoading = true
-    var authManager = AuthenticationManager.instance
-    
-    let service = WebService()
-    
-    func getSpecialists() async {
-        let result = await service.getAllSpecialists()
-        
-        switch result {
-        case .success(let specialists):
-            self.specialists = specialists
-        case .failure(let error):
-            print(error.localizedDescription)
-        }
-        isLoading = false
-    }
-    
-    func logout() async {
-        let result = await service.logoutPatient()
-        
-        switch result {
-        case .success(_):
-            authManager.removeToken()
-            authManager.removePatientID()
-        case .failure(let error):
-            print(error.localizedDescription)
-        }
-    }
-    
+    var viewModel = HomeViewModel(homeService: HomeService(),
+                                  authService: AuthenticationService())
+
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack {
@@ -69,13 +44,16 @@ struct HomeView: View {
         }
         .padding(.top)
         .task {
-            await getSpecialists()
+            if let response = await viewModel.getSpecialists() {
+                self.specialists = response
+            }
+            isLoading = false
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button(action: {
                     Task {
-                        await logout()
+                        await viewModel.logout()
                     }
                 }, label: {
                     HStack(spacing: 2) {

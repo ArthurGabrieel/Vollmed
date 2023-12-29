@@ -13,7 +13,7 @@ struct TextFieldWithTitle: View {
     @Binding var text: String
     var keyboardType: UIKeyboardType = .default
     var isPassword: Bool?
-    
+
     var body: some View {
         VStack(alignment: .leading) {
             Text(title)

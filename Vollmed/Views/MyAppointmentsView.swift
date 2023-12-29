@@ -9,25 +9,8 @@ import SwiftUI
 
 struct MyAppointmentsView: View {
     @State private var appointments: [Appointment] = []
-    let service = WebService()
-    var authManager = AuthenticationManager.instance
-    
-    func getAllAppointments() async {
-        guard let patientID = authManager.patientID else {
-            print("error to get patient id")
-            return
-        }
-        
-        let result = await service.getAllAppointmentsFromPatient(id: patientID)
-        
-        switch result {
-        case .success(let appointments):
-            self.appointments = appointments
-        case .failure(let error):
-            print(error.localizedDescription)
-        }
-    }
-    
+    let viewModel = MyAppointmentsViewModel(service: AppointmentService())
+
     var body: some View {
         VStack {
             if appointments.isEmpty {
@@ -39,7 +22,8 @@ struct MyAppointmentsView: View {
             } else {
                 ScrollView(showsIndicators: false) {
                     ForEach(appointments) { appointment in
-                        SpecialistCardView(specialist: appointment.specialist, appointment: appointment)
+                        SpecialistCardView(specialist: appointment.specialist, 
+                                           appointment: appointment)
                     }
                 }
             }
@@ -48,7 +32,9 @@ struct MyAppointmentsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .padding()
         .task {
-            await getAllAppointments()
+            if let appointments = await viewModel.getAppointmentsFromPatient() {
+                self.appointments = appointments
+            }
         }
     }
 }

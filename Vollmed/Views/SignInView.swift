@@ -12,42 +12,26 @@ struct SignInView: View {
     @State private var password = ""
     @State private var showAlert = false
     @State private var isLoading = false
-    var authManager = AuthenticationManager.instance
-    
-    let service =  WebService()
-    
-    func login() async {
-        isLoading = true
-        let result = await service.loginPatient(LoginRequest(email: email, password: password))
-        
-        switch result {
-        case .success(let response):
-            authManager.saveToken(token: response.token)
-            authManager.savePatientID(id: response.id)
-        case .failure(let error):
-            showAlert = true
-            print(error.localizedDescription)
-        }
-        isLoading = false
-    }
+    let viewModel = AuthenticationViewModel(service: AuthenticationService())
+
     var body: some View {
         ZStack {
             VStack(alignment: .leading, spacing: 16) {
                 SignInHeaderView()
-                
                 TextFieldWithTitle(title: "Email", placeholder: "Insira seu email", text: $email, keyboardType: .emailAddress)
-                
                 TextFieldWithTitle(title: "Senha", placeholder: "Insira sua senha", text: $password, isPassword: true)
-                
                 Button(action: {
                     Task {
-                        await login()
+                        isLoading = true
+                        let isLogged = await viewModel.login(LoginRequest(email: email, password: password))
+                        isLoading = false
+                        showAlert = !isLogged
                     }
                 }, label: {
                     ButtonView(text: "Entrar")
                 })
                 .disabled(isLoading)
-                
+
                 NavigationLink {
                     SignUpView()
                 } label: {
@@ -66,7 +50,7 @@ struct SignInView: View {
             } message: {
                 Text("Houve um erro ao entrar na sua conta. Por favor tente novamente.")
             }
-            
+
             if isLoading {
                 Color(.black)
                     .opacity(0.3)
@@ -91,7 +75,7 @@ struct SignInHeaderView: View {
             .font(.title2)
             .bold()
             .foregroundStyle(.accent)
-        
+
         Text("Preencha para acessar sua conta.")
             .font(.title3)
             .bold()
@@ -99,7 +83,6 @@ struct SignInHeaderView: View {
             .padding(.bottom)
     }
 }
-
 
 #Preview {
     SignInView()

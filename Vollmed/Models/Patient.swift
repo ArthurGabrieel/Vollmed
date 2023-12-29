@@ -15,7 +15,7 @@ struct Patient: Codable, Identifiable {
     let phoneNumber: String
     let healthPlan: String
     let password: String
-    
+
     enum CodingKeys: String, CodingKey {
         case id, cpf, email
         case name = "nome"

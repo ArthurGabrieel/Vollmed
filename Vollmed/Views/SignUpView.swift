@@ -1,5 +1,5 @@
 //
-//  SignInView.swift
+//  SignUpView.swift
 //  Vollmed
 //
 //  Created by Arthur Gabriel Gomes on 26/12/23.
@@ -17,52 +17,37 @@ struct SignUpView: View {
     @State private var showAlert = false
     @State private var isPatientRegistered = false
     @State private var navigateToSignInView: Bool = false
-    
-    let service = WebService()
-    
+
+    let viewModel = AuthenticationViewModel(service: AuthenticationService())
+
     let healthPlans = [
         "Amil", "Unimed", "Bradesco Saúde", "SulAmérica",
         "Hapvida", "Notredame Intermédica", "São Francisco Saúde",
-        "Golden Cross", "Medial Saúde", "América Saúde", "Outro"
+        "Golden Cross", "Medial Saúde", "América Saúde", "Outro",
     ]
-    
-    func register() async {
-        let patient = Patient(id: nil, name: name, cpf: cpf,
-                              email: email, phoneNumber: phoneNumber,
-                              healthPlan: healthPlan, password: password)
-        
-        let result = await service.registerPatient(patient)
-        
-        switch result {
-        case .success(_):
-            isPatientRegistered = true
-        case .failure(let error):
-            print(error.localizedDescription)
-        }
-        showAlert = true
-    }
-    
+
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 16) {
                 SignUpHeaderView()
-                
                 TextFieldWithTitle(title: "Nome", placeholder: "Insira seu nome completo", text: $name)
                 TextFieldWithTitle(title: "Email", placeholder: "Insira seu email", text: $email, keyboardType: .emailAddress)
                 TextFieldWithTitle(title: "CPF", placeholder: "Insira seu CPF", text: $cpf, keyboardType: .numberPad)
                 TextFieldWithTitle(title: "Telefone", placeholder: "Insira seu telefone", text: $phoneNumber, keyboardType: .numberPad)
                 TextFieldWithTitle(title: "Senha", placeholder: "Insira sua senha", text: $password, isPassword: true)
-                
                 HealthPlanPickerView(healthPlan: $healthPlan, healthPlans: healthPlans)
-                
                 Button(action: {
                     Task {
-                        await register()
+                        let isRegistered = await viewModel.register(Patient(id: nil, name: name, cpf: cpf,
+                                                                            email: email, phoneNumber: phoneNumber,
+                                                                            healthPlan: healthPlan, password: password))
+                        isPatientRegistered = isRegistered
+                        showAlert = true
                     }
                 }, label: {
                     ButtonView(text: "Cadastrar")
                 })
-                
+
                 NavigationLink {
                     SignInView()
                 } label: {
@@ -76,15 +61,15 @@ struct SignUpView: View {
             .padding()
             .alert(isPatientRegistered ? "Sucesso" : "Ops! Algo deu errado!", isPresented: $showAlert, presenting: $isPatientRegistered) { _ in
                 Button(action: {
-                    navigateToSignInView = isPatientRegistered
-                },
+                           navigateToSignInView = isPatientRegistered
+                       },
                        label: {
-                    Text("Ok")
-                })
+                           Text("Ok")
+                       })
             } message: { _ in
                 Text(isPatientRegistered ?
-                     "O paciente foi cadastrado com sucesso" :
-                        "Houve um erro ao cadastrar o paciente. Por favor tente novamente.")
+                    "O paciente foi cadastrado com sucesso" :
+                    "Houve um erro ao cadastrar o paciente. Por favor tente novamente.")
             }
         }
         .navigationDestination(isPresented: $navigateToSignInView) {
@@ -104,7 +89,7 @@ struct SignUpHeaderView: View {
             .font(.title2)
             .bold()
             .foregroundStyle(.accent)
-        
+
         Text("Insira seus dados para criar uma conta.")
             .font(.title3)
             .bold()
@@ -116,13 +101,13 @@ struct SignUpHeaderView: View {
 struct HealthPlanPickerView: View {
     @Binding var healthPlan: String
     let healthPlans: [String]
-    
+
     var body: some View {
         Text("Selecione o seu plano de saúde")
             .font(.title3)
             .bold()
             .foregroundStyle(.accent)
-        
+
         Picker("Plano de saúde", selection: $healthPlan) {
             ForEach(healthPlans, id: \.self) { healthPlan in
                 Text(healthPlan)
@@ -134,4 +119,3 @@ struct HealthPlanPickerView: View {
 #Preview {
     SignUpView()
 }
-

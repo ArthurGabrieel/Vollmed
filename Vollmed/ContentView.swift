@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @ObservedObject var authManager = AuthenticationManager.instance
-    
+
     var body: some View {
         if authManager.token == nil {
             NavigationStack {

@@ -13,53 +13,18 @@ struct ScheduleAppointmentView: View {
     @State private var isAppointmentScheduled = false
     @Environment(\.presentationMode) var presentationMode
     var authManager = AuthenticationManager.instance
-    
-    let service = WebService()
+
+    let viewModel = ScheduleAppointmentViewModel(service: AppointmentService())
     let specialistID: String
     let isRescheduleView: Bool
     let appointmentID: String?
-    
+
     init(specialistID: String, isRescheduleView: Bool = false, appointmentID: String? = nil) {
         self.specialistID = specialistID
         self.isRescheduleView = isRescheduleView
         self.appointmentID = appointmentID
     }
-    
-    func rescheduleAppointment() async {
-        guard let appointmentID else { return print("Error get appointmentID") }
-        let result = await service.rescheduleAppointment(id: appointmentID,
-                                                         date: selectedDate.convertToString())
-        
-        switch result {
-        case .success(_):
-            isAppointmentScheduled = true
-        case .failure(let error):
-            isAppointmentScheduled = false
-            print(error.localizedDescription)
-        }
-        showAlert = true
-    }
-    
-    func scheduleAppointment() async {
-        guard let patientID = authManager.patientID else {
-            print("error to get patient id")
-            return
-        }
-        
-        let appointmentRequest = ScheduleAppointmentRequest(specialist: specialistID,
-                                                            patient: patientID,
-                                                            date: selectedDate.convertToString())
-        let result = await service.scheduleAppointment(appointmentRequest)
-        switch result {
-        case .success(_):
-            isAppointmentScheduled = true
-        case .failure(let error):
-            isAppointmentScheduled = false
-            print(error.localizedDescription)
-        }
-        showAlert = true
-    }
-    
+
     var body: some View {
         VStack(spacing: 30) {
             Text("Selecione a data e o horário da consulta")
@@ -73,7 +38,12 @@ struct ScheduleAppointmentView: View {
             Spacer()
             Button(action: {
                 Task {
-                    isRescheduleView ? await rescheduleAppointment(): await scheduleAppointment()
+                    if isRescheduleView {
+                        isAppointmentScheduled = await viewModel.rescheduleAppointment(id: appointmentID!, date: selectedDate)
+                    } else {
+                        isAppointmentScheduled = await viewModel.scheduleAppointment(specialistID, date: selectedDate)
+                    }
+                    showAlert = true
                 }
             }, label: {
                 ButtonView(text: isRescheduleView ? "Reagendar Consulta" : "Agendar consulta")
@@ -89,7 +59,8 @@ struct ScheduleAppointmentView: View {
         }
         .alert(isAppointmentScheduled ? "Sucesso" : "Ops, algo deu errado!",
                isPresented: $showAlert,
-               presenting: isAppointmentScheduled) { _ in
+               presenting: isAppointmentScheduled)
+        { _ in
             Button(action: {
                 presentationMode.wrappedValue.dismiss()
             }, label: {
@@ -97,10 +68,9 @@ struct ScheduleAppointmentView: View {
             })
         } message: { isScheduled in
             Text(isScheduled ?
-                 "A consulta foi \(isRescheduleView ? "reagendada" : "agendada") com sucesso!" :
-                    "Houve um erro ao \(isRescheduleView ? "reagendadar" : "agendadar") sua consulta. Por favor tente novamente ou entre em contato via telefone.")
+                "A consulta foi \(isRescheduleView ? "reagendada" : "agendada") com sucesso!" :
+                "Houve um erro ao \(isRescheduleView ? "reagendadar" : "agendadar") sua consulta. Por favor tente novamente ou entre em contato via telefone.")
         }
-        
     }
 }
 

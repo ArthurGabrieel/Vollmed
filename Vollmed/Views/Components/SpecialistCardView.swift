@@ -9,21 +9,10 @@ import SwiftUI
 
 struct SpecialistCardView: View {
     @State private var specialistImage: UIImage?
-    let service = WebService()
-    
+    let viewModel = SpecialistCardViewModel(service: DownloadImageService())
+
     var specialist: Specialist
     var appointment: Appointment?
-    
-    func dowloadImage(from imageURL: String) async {
-        let result = await service.downloadImage(from: imageURL)
-        
-        switch result {
-        case .success(let image):
-            self.specialistImage = image
-        case .failure(let error):
-            print(error.localizedDescription)
-        }
-    }
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -51,7 +40,7 @@ struct SpecialistCardView: View {
                     } label: {
                         ButtonView(text: "Remarcar")
                     }
-                    
+
                     NavigationLink {
                         CancelAppointmentView(appointmentID: appointment.id)
                     } label: {
@@ -71,19 +60,20 @@ struct SpecialistCardView: View {
         .background(Color(.lightBlue).opacity(0.15))
         .cornerRadius(16.0)
         .task {
-            await dowloadImage(from: specialist.imageUrl)
+            if let image = await viewModel.dowloadImage(from: specialist.imageUrl) {
+                self.specialistImage = image
+            }
         }
     }
 }
 
 #Preview {
     SpecialistCardView(specialist:
-                        Specialist(id: "c84k5kf",
-                                   name: "Dr. Carlos Alberto",
-                                   crm: "123456",
-                                   imageUrl: "https://images.unsplash.com/photo-1637059824899-a441006a6875?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=752&q=80",
-                                   specialty: "Neurologia",
-                                   email: "carlos.alberto@example.com",
-                                   phoneNumber: "(11) 99999-9999"
-                                  ))
+        Specialist(id: "c84k5kf",
+                   name: "Dr. Carlos Alberto",
+                   crm: "123456",
+                   imageUrl: "https://images.unsplash.com/photo-1637059824899-a441006a6875?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=752&q=80",
+                   specialty: "Neurologia",
+                   email: "carlos.alberto@example.com",
+                   phoneNumber: "(11) 99999-9999"))
 }
