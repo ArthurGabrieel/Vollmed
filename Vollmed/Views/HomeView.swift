@@ -10,15 +10,15 @@ import SwiftUI
 struct HomeView: View {
     @State private var specialists: [Specialist] = []
     @State private var isLoading = true
+    @State private var isShowingSnackBar = false
+    @State private var errorMessage = ""
     var viewModel = HomeViewModel(homeService: HomeService(),
                                   authService: AuthenticationService())
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack {
-                if isLoading {
-                    ProgressView()
-                } else {
+        ZStack {
+            ScrollView(showsIndicators: false) {
+                VStack {
                     Image(.logo)
                         .resizable()
                         .scaledToFit()
@@ -34,33 +34,46 @@ struct HomeView: View {
                         .foregroundStyle(.accent)
                         .multilineTextAlignment(.center)
                         .padding(.vertical, 16)
-                    ForEach(specialists) { specialist in
-                        SpecialistCardView(specialist: specialist)
-                            .padding(.bottom, 8)
+                    if isLoading {
+                        SkeletonView()
+                    } else {
+                        ForEach(specialists) { specialist in
+                            SpecialistCardView(specialist: specialist)
+                                .padding(.bottom, 8)
+                        }
                     }
                 }
+                .padding(.horizontal)
             }
-            .padding(.horizontal)
-        }
-        .padding(.top)
-        .task {
-            if let response = await viewModel.getSpecialists() {
-                self.specialists = response
+            .padding(.top)
+            .task {
+                do {
+                    if let response = try await viewModel.getSpecialists() {
+                        self.specialists = response
+                    }
+                } catch {
+                    isShowingSnackBar = true
+                    let errorType = error as? RequestError
+                    errorMessage = errorType?.customMessage ?? "Ops! Ocorreu um erro"
+                }
+                isLoading = false
             }
-            isLoading = false
-        }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(action: {
-                    Task {
-                        await viewModel.logout()
-                    }
-                }, label: {
-                    HStack(spacing: 2) {
-                        Image(systemName: "rectangle.portrait.and.arrow.right")
-                        Text("Logout")
-                    }
-                })
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: {
+                        Task {
+                            await viewModel.logout()
+                        }
+                    }, label: {
+                        HStack(spacing: 2) {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                            Text("Logout")
+                        }
+                    })
+                }
+            }
+            if isShowingSnackBar {
+                SnackBarErrorView(isShowing: $isShowingSnackBar, message: errorMessage)
             }
         }
     }

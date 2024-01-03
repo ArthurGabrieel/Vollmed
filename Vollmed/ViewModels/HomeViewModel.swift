@@ -17,15 +17,14 @@ struct HomeViewModel {
         self.authService = authService
     }
 
-    func getSpecialists() async -> [Specialist]? {
+    func getSpecialists() async throws -> [Specialist]? {
         let result = await homeService.getAllSpecialists()
 
         switch result {
         case let .success(response):
             return response
         case let .failure(error):
-            print(error.customMessage)
-            return []
+            throw error
         }
     }
 

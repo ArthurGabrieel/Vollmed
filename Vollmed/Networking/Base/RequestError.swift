@@ -14,6 +14,7 @@ enum RequestError: Error {
     case unauthorized
     case unknown
     case badRequest(String)
+    case custom(error: [String: Any]?)
 
     var customMessage: String {
         switch self {
@@ -29,6 +30,12 @@ enum RequestError: Error {
             return "unknown error"
         case let .badRequest(error):
             return "bad request: \(error.description)"
+        case .custom(error: let error):
+            if let jsonError = error?["error"] as? [String: Any] {
+                let message = jsonError["message"] as? String ?? ""
+                return message
+            }
+            return "Ops! Ocorreu um erro ao carregar as informações"
         }
     }
 }
